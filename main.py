@@ -55,70 +55,65 @@ async def delete_author(id: int, db: AsyncSession = Depends(get_db)):
 
 # Эндпоинты для книг
 
-@app.post("/book")
-async def create_book(book_data: Book = Depends()):
+@app.post("/books", response_model=SchemaBook)
+async def create_book(book_data: Book, db: AsyncSession = Depends(get_db)):
     book = Book(**book_data.model_dump())
     book_repository = BookRepository()
-    created_book = await book_repository.create_book(book)
+    created_book = await book_repository.create_book(book, db)
+
+    if not created_book:
+        raise HTTPException(status_code=400, detail="Не удалось создать книгу")
     return {"message": "Книга успешно добавлена в библиотеку!", "book": created_book}
 
 
-@app.get("/books", response_model=List[Book])
-async def get_books():
-    books = await BookRepository.get_books()
+@app.get("/books", response_model=List[SchemaBook])
+async def get_books(db: AsyncSession = Depends(get_db)):
+    books = await BookRepository.get_books(db)
     return books
 
-
 @app.get("/books/{id}", response_model=SchemaBook)
-async def get_book_by_id(book_id: int):
-    book = await BookRepository.get_book_by_id(book_id)
+async def get_book_by_id(book_id: int, db: AsyncSession = Depends(get_db)):
+    book = await BookRepository.get_book_by_id(book_id, db)
     if book:
         return book
-    return {"error": "Book not found"}
+    raise HTTPException(status_code=404, detail="Книга не найдена")
 
-
-@app.put("/books/{book_id}", response_model=SchemaBook)
-async def update_book(book_id: int, book_data: Book):
-    updated_book = await BookRepository.update_book(book_id, book_data.model_dump())
+@app.patch("/books/{book_id}", response_model=SchemaBook)
+async def patch_book(book_id: int, book_data: dict, db: AsyncSession = Depends(get_db)):
+    updated_book = await BookRepository.patch_book(book_id, book_data, db)
     if not updated_book:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise HTTPException(status_code=404, detail="Книга не найдена")
     return updated_book
 
-
-
 @app.delete("/books/{id}", response_model=SchemaBook)
-async def delete_book(id: int):
-    deleted_book = await BookRepository.delete_book(id)
+async def delete_book(id: int, db: AsyncSession = Depends(get_db)):
+    deleted_book = await BookRepository.delete_book(id, db)
     if deleted_book:
         return deleted_book
-    return {"error": "Book not found"}
+    raise HTTPException(status_code=404, detail="Книга не найдена")
 
-
-# Эндпоинтs для выдач
+# Эндпоинты для выдач
 
 @app.post("/borrows", response_model=Borrow)
-async def create_borrow(borrow: Borrow):
-    new_borrow = await BorrowRepository.create_borrow(borrow.model_dump())
+async def create_borrow(borrow: Borrow, db: AsyncSession = Depends(get_db)):
+    new_borrow = await BorrowRepository.create_borrow(borrow.model_dump(), db)
     return new_borrow
 
-
 @app.get("/borrows", response_model=List[Borrow])
-async def get_borrows():
-    borrows = await BorrowRepository.get_borrows()
+async def get_borrows(db: AsyncSession = Depends(get_db)):
+    borrows = await BorrowRepository.get_borrows(db)
     return borrows
 
-
 @app.get("/borrows/{id}", response_model=Borrow)
-async def get_borrow_by_id(id: int):
-    borrow = await BorrowRepository.get_borrow_by_id(id)
+async def get_borrow_by_id(id: int, db: AsyncSession = Depends(get_db)):
+    borrow = await BorrowRepository.get_borrow_by_id(id, db)
     if borrow:
         return borrow
-    return {"error": "Borrow not found"}
-
+    raise HTTPException(status_code=404, detail="Выдача не найдена")
 
 @app.patch("/borrows/{id}/return", response_model=SchemaBarrow)
-async def return_borrow(id: int, return_date):
-    returned_borrow = await BorrowRepository.return_borrow(id, return_date)
+async def return_borrow(id: int, return_date: str, db: AsyncSession = Depends(get_db)):
+    returned_borrow = await BorrowRepository.return_borrow(id, return_date, db)
     if returned_borrow:
         return returned_borrow
-    return {"error": "Borrow not found"}
+    raise HTTPException(status_code=404, detail="Выдача не найдена")
