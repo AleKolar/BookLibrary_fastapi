@@ -3,9 +3,9 @@ from typing import List
 
 from fastapi import FastAPI, HTTPException
 from fastapi.params import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
-
-from src.DB.database import create_tables, delete_tables
+from src.DB.database import create_tables, delete_tables, get_db
 from src.pydentic_models.models import Author, Book, Borrow, SchemaAuthor, SchemaBook, SchemaBarrow
 from src.repository.repository import AuthorRepository, BookRepository, BorrowRepository
 
@@ -23,42 +23,34 @@ app = FastAPI(lifespan=lifespan)
 
 
 # Эндпоинтs для авторов
-@app.post("/")
-async def create_author(author: Author = Depends()):
-    author_repository = AuthorRepository()
-    created_author = await author_repository.create_author(author)
-    return {"message": "Автор успешно добавлен в библиотеку!", "author": created_author}
+@app.post("/", response_model=SchemaAuthor)  # Предполагаю, что это ваша схема для возвращаемого автора
+async def create_author(data: Author, db: AsyncSession = Depends(get_db)):
+    return await AuthorRepository.create_author(data, db)
 
+@app.get("/authors", response_model=List[SchemaAuthor])
+async def get_all_authors(db: AsyncSession = Depends(get_db)):
+    return await AuthorRepository.get_authors(db)
 
-@app.get("/authors", response_model=List[Author])
-async def get_authors():
-    authors = await AuthorRepository.get_authors()
-    return authors
+@app.get("/authors/{id}", response_model=SchemaAuthor)  # Добавлен новый метод для получения автора по ID
+async def get_author_by_id(id: int, db: AsyncSession = Depends(get_db)):
+    author = await AuthorRepository.get_author_by_id(id, db)
+    if author is None:
+        raise HTTPException(status_code=404, detail="Author not found")
+    return author
 
-
-@app.get("/authors/{id}", response_model=Author)
-async def get_author_by_id(author_id: int):
-    author = await AuthorRepository.get_author_by_id(author_id)
-    if author:
-        return author
-    return {"error": "Author not found"}
-
-
-@app.put("/authors/{id}", response_model=Author)
-async def update_author(id: int, author: Author):
-    updated_author = await AuthorRepository.update_author(id, author.model_dump())
-    if updated_author:
-        return updated_author
-    return {"error": "Author not found"}
-
+@app.patch("/authors/{id}", response_model=SchemaAuthor)
+async def update_author(author_id: int, author_data: Author, db: AsyncSession = Depends(get_db)):
+    updated_author = await AuthorRepository.update_author(author_id, author_data.model_dump(), db)
+    if updated_author is None:
+        raise HTTPException(status_code=404, detail="Author not found")
+    return updated_author
 
 @app.delete("/authors/{id}", response_model=SchemaAuthor)
-async def delete_author(id: int):
-    deleted_author = await AuthorRepository.delete_author(id)
-    if deleted_author:
-        return deleted_author
-    else:
+async def delete_author(id: int, db: AsyncSession = Depends(get_db)):
+    deleted_author = await AuthorRepository.delete_author(id, db)
+    if deleted_author is None:
         raise HTTPException(status_code=404, detail="Author not found")
+    return deleted_author
 
 
 # Эндпоинты для книг
