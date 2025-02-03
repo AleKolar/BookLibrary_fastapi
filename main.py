@@ -40,7 +40,7 @@ async def get_author_by_id(id: int, db: AsyncSession = Depends(get_db)):
 
 @app.patch("/authors/{id}", response_model=SchemaAuthor)
 async def update_author(author_id: int, author_data: Author, db: AsyncSession = Depends(get_db)):
-    updated_author = await AuthorRepository.update_author(author_id, author_data.model_dump(), db)
+    updated_author = await AuthorRepository.update_author(author_data.model_dump(), db)
     if updated_author is None:
         raise HTTPException(status_code=404, detail="Author not found")
     return updated_author
@@ -57,13 +57,13 @@ async def delete_author(id: int, db: AsyncSession = Depends(get_db)):
 
 @app.post("/books", response_model=SchemaBook)
 async def create_book(book_data: Book, db: AsyncSession = Depends(get_db)):
-    book = Book(**book_data.model_dump())
     book_repository = BookRepository()
-    created_book = await book_repository.create_book(book, db)
+
+    created_book = await book_repository.create_book(book_data, db)
 
     if not created_book:
         raise HTTPException(status_code=400, detail="Не удалось создать книгу")
-    return {"message": "Книга успешно добавлена в библиотеку!", "book": created_book}
+    return created_book
 
 
 @app.get("/books", response_model=List[SchemaBook])
@@ -71,7 +71,7 @@ async def get_books(db: AsyncSession = Depends(get_db)):
     books = await BookRepository.get_books(db)
     return books
 
-@app.get("/books/{id}", response_model=SchemaBook)
+@app.get("/books/{id}")
 async def get_book_by_id(book_id: int, db: AsyncSession = Depends(get_db)):
     book = await BookRepository.get_book_by_id(book_id, db)
     if book:
@@ -79,8 +79,9 @@ async def get_book_by_id(book_id: int, db: AsyncSession = Depends(get_db)):
     raise HTTPException(status_code=404, detail="Книга не найдена")
 
 @app.patch("/books/{book_id}", response_model=SchemaBook)
-async def patch_book(book_id: int, book_data: dict, db: AsyncSession = Depends(get_db)):
-    updated_book = await BookRepository.patch_book(book_id, book_data, db)
+async def update_book(book_id: int, book_data: Book, db: AsyncSession = Depends(get_db)):
+    book = Book.model_dump(book_data)
+    updated_book = await BookRepository.update_book(book_id, book, db)
     if not updated_book:
         raise HTTPException(status_code=404, detail="Книга не найдена")
     return updated_book
