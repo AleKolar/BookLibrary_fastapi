@@ -13,4 +13,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем код приложения
 COPY ./src ./src
 
-CMD ["uvicorn", "src.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80"]
