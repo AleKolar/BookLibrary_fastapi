@@ -1,0 +1,41 @@
+
+
+services:
+  app:
+    build: .
+    volumes:
+      - ./src:/app/src
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: my_library_3
+    ports:
+      - "8000:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres  # Убедитесь, что этот пароль безопасен
+      POSTGRES_DB: my_library_3
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine  # Используем легкий образ Nginx
+    ports:
+      - "80:80"  # Проброс порта 80 Nginx на хост
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf  # Копируем конфигурацию Nginx
+    depends_on:
+      - app
