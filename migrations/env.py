@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from src.DB.database import Model
-from src.config import settings
+from src.config.config import settings
 
 # Определите целевую метадату для миграций
 target_metadata = Model.metadata
