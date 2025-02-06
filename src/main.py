@@ -1,15 +1,19 @@
 from contextlib import asynccontextmanager
+from datetime import timedelta, datetime, timezone
 from typing import List
 
+import jwt
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
+from src.config import settings
 from src.db.database import create_tables, delete_tables, get_db
-from src.models.pydentic_models import SchemaAuthor, Author, SchemaBook, Book, Borrow, SchemaBarrow
-from src.repository.repository import AuthorRepository, BookRepository, BorrowRepository
+from src.models.pydentic_models import SchemaAuthor, Author, SchemaBook, Book, Borrow, SchemaBarrow, SchemaUser, User
+from src.repository.repository import AuthorRepository, BookRepository, BorrowRepository, UserRepository
+
+'''Блок эндпоинтов и регистрация/авторизация'''
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,6 +23,37 @@ async def lifespan(app: FastAPI):
    await delete_tables()
    print("База очищена")
 app = FastAPI(lifespan=lifespan)
+
+@app.post("/register/", response_model=SchemaUser)
+async def register(user: User, db: AsyncSession = Depends(get_db)):
+    existing_user = await UserRepository.get_user_by_username(user.username, db)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+
+    db_user = await UserRepository.create_user(user, db)
+    return db_user
+
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+# Пример использования
+token = create_access_token(data={"sub": "user_id"})
+print(token)
+
+
+@app.post("/login/")
+async def login(user: User, db: AsyncSession = Depends(get_db)):
+    db_user = await UserRepository.get_user_by_username(user.username, db)
+    if db_user is None or not await UserRepository.verify_password(user.password, db_user.password):
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+
+    access_token = create_access_token(data={"sub": db_user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 # Эндпоинтs для авторов
 @app.post("/", response_model=SchemaAuthor)  # Предполагаю, что это ваша схема для возвращаемого автора

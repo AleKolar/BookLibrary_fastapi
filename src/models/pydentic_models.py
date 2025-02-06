@@ -1,9 +1,17 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
 '''Блок моделей для валидации данных'''
+
+class User(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+class SchemaUser(User):
+    id: int
 
 class Author(BaseModel):
     first_name: Optional[str] = None

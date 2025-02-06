@@ -1,4 +1,3 @@
-
 from datetime import date, datetime
 from typing import List, Optional, Type
 
@@ -6,8 +5,33 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from src.models.orm_models import AuthorOrm, BookOrm, BorrowOrm
-from src.models.pydentic_models import Author, Book, SchemaBook, SchemaAuthor
+from src.models.orm_models import AuthorOrm, BookOrm, BorrowOrm, UserOrm
+from src.models.pydentic_models import Author, Book, SchemaBook, SchemaAuthor, User
+
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+'''Блок функциональных методов класса User для регистрации и авторизации'''
+
+class UserRepository:
+    @staticmethod
+    async def create_user(user: User, db: AsyncSession):
+        hashed_password = pwd_context.hash(user.password)
+        db_user = UserOrm(username=user.username, email=user.email, password=hashed_password)
+        db.add(db_user)
+        await db.commit()
+        await db.refresh(db_user)
+        return db_user
+
+    @staticmethod
+    async def get_user_by_username(username: str, db: AsyncSession):
+        result = await db.execute(select(UserOrm).where(UserOrm.username == username))
+        return result.scalars().first()
+
+    @staticmethod
+    async def verify_password(plain_password: str, hashed_password: str) -> bool:
+        return pwd_context.verify(plain_password, hashed_password)
 
 '''Блок функциональных методов CRUD'''
 
@@ -44,8 +68,8 @@ class AuthorRepository:
         return authors if authors else []
 
     @classmethod
-    async def get_author_by_id(cls, id: int, db: AsyncSession) -> Optional[AuthorOrm]:
-        author = await db.get(AuthorOrm, id)
+    async def get_author_by_id(cls, author_id: int, db: AsyncSession) -> Optional[AuthorOrm]:
+        author = await db.get(AuthorOrm, author_id)
         return author if author else None
 
     @classmethod

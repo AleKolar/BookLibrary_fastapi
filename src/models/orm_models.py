@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, relationship, mapped_column,DeclarativeBase
 
 
@@ -10,6 +10,12 @@ from sqlalchemy.orm import Mapped, relationship, mapped_column,DeclarativeBase
 class Model(DeclarativeBase):
    pass
 
+class UserOrm(Model):
+    __tablename__ = "users"
+    id: Mapped[int | None] = mapped_column(primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String, unique=True, index=True)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True)
+    password: Mapped[str]
 
 class AuthorOrm(Model):
     __tablename__ = 'author'
