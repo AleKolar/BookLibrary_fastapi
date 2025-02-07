@@ -47,8 +47,12 @@ class UserRepository:
 
     @staticmethod
     async def get_all_user_emails(db: AsyncSession):
-        result = await db.execute(select(User.email))
-        return [row[0] for row in result.scalars().all()]
+        query = select(UserOrm.email)
+        result = await db.execute(query)
+        emails = result.scalars().all()
+        if emails:
+            return emails
+        return None
 
 '''Блок функциональных методов CRUD'''
 

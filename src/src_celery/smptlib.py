@@ -1,8 +1,0 @@
-
-# Настройки SMTP
-EMAIL_HOST = 'smtp.yandex.ru'
-EMAIL_PORT = 465
-EMAIL_HOST_USER = 'qefest-173'
-EMAIL_HOST_PASSWORD = 'Mn14071979'
-EMAIL_USE_SSL = True
-
