@@ -41,6 +41,11 @@ class UserRepository:
         return encoded_jwt
 
     @staticmethod
+    async def get_user_by_username(username: str, db: AsyncSession):
+        result = await db.execute(select(UserOrm).where(UserOrm.username == username))
+        return result.scalars().first()
+
+    @staticmethod
     async def get_all_user_emails(db: AsyncSession):
         result = await db.execute(select(User.email))
         return [row[0] for row in result.fetchall()]

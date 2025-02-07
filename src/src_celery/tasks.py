@@ -3,6 +3,11 @@ import smtplib
 from email.mime.text import MIMEText
 from celery import shared_task
 from dotenv import load_dotenv
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -22,11 +27,13 @@ def send_email(to_email: str, subject: str, body: str):
     msg['To'] = to_email
 
     try:
-        print(f"Connecting to {EMAIL_HOST}:{EMAIL_PORT} as {EMAIL_HOST_USER}")
+        logger.info(f"Connecting to {EMAIL_HOST}:{EMAIL_PORT} as {EMAIL_HOST_USER}")
         with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT) as server:
-            print("Logging in...")
+            logger.info("Logging in...")
             server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
             server.sendmail(EMAIL_HOST_USER, to_email, msg.as_string())
-            print(f"Email sent to {to_email}")
+            logger.info(f"Email sent to {to_email}")
+    except smtplib.SMTPAuthenticationError:
+        logger.error("Authentication failed, please check your email credentials.")
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        logger.error(f"Failed to send email: {e}")
