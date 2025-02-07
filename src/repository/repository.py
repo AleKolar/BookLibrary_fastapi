@@ -1,10 +1,13 @@
-from datetime import date, datetime
+import jwt
+
+from datetime import timedelta, datetime, timezone, date
 from typing import List, Optional, Type
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from src.config import settings
 from src.models.orm_models import AuthorOrm, BookOrm, BorrowOrm, UserOrm
 from src.models.pydentic_models import Author, Book, SchemaBook, SchemaAuthor, User
 
@@ -32,6 +35,21 @@ class UserRepository:
     @staticmethod
     async def verify_password(plain_password: str, hashed_password: str) -> bool:
         return pwd_context.verify(plain_password, hashed_password)
+
+    @staticmethod
+    async def get_all_user_emails(db: AsyncSession):
+        query = select(UserOrm.email)  # Исправлено на UserOrm
+        result = await db.execute(query)
+        emails = result.scalars().all()
+        return emails if emails else []
+
+    @staticmethod
+    def create_access_token(data: dict, expires_delta: timedelta = None):
+        to_encode = data.copy()
+        expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+        to_encode.update({"exp": expire})
+        encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+        return encoded_jwt
 
 '''Блок функциональных методов CRUD'''
 
@@ -221,7 +239,7 @@ class BookRepository:
         return None
 
     @classmethod
-    async def delete_book(cls, id: int, db: AsyncSession) -> Optional[BookOrm]:
+    async def delete_book(cls, id: int, db: AsyncSession) -> Type[BookOrm] | None:
         book_to_delete = await db.get(BookOrm, id)
         if book_to_delete:
             await db.delete(book_to_delete)
@@ -243,7 +261,7 @@ class BookRepository:
             raise ValueError("Книга не найдена.")
 
     @classmethod
-    async def return_book(cls, book_id: int, db: AsyncSession) -> Optional[BookOrm]:
+    async def return_book(cls, book_id: int, db: AsyncSession) -> Type[BookOrm] | None:
         book = await db.get(BookOrm, book_id)
         if book:
             book.available_copies += 1
@@ -315,3 +333,4 @@ class BorrowRepository:
             return borrow_to_return
 
         return None
+
