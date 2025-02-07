@@ -7,10 +7,12 @@ def make_celery():
         backend='rpc://',
     )
 
+    # Обновляем конфигурацию
     app_task.conf.update(
         task_routes={
             'src.src_celery.tasks.send_email': 'default',
         },
+        broker_connection_retry_on_startup=True,  # Добавлено для попыток повторного подключения
     )
 
     with app_task.connection() as connection:

@@ -29,20 +29,8 @@ class UserRepository:
         return db_user
 
     @staticmethod
-    async def get_user_by_username(username: str, db: AsyncSession):
-        result = await db.execute(select(UserOrm).where(UserOrm.username == username))
-        return result.scalars().first()
-
-    @staticmethod
     async def verify_password(plain_password: str, hashed_password: str) -> bool:
         return pwd_context.verify(plain_password, hashed_password)
-
-    @staticmethod
-    async def get_all_user_emails(db: AsyncSession):
-        query = select(UserOrm.email)
-        result = await db.execute(query)
-        emails = result.scalars().all()
-        return emails if emails else []
 
     @staticmethod
     def create_access_token(data: dict, expires_delta: timedelta = None):
@@ -51,6 +39,11 @@ class UserRepository:
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
         return encoded_jwt
+
+    @staticmethod
+    async def get_all_user_emails(db: AsyncSession):
+        result = await db.execute(select(User.email))
+        return [row[0] for row in result.fetchall()]
 
 '''Блок функциональных методов CRUD'''
 

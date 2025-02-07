@@ -29,7 +29,6 @@ async def register(user: User, db: AsyncSession = Depends(get_db)):
     existing_user = await UserRepository.get_user_by_username(user.username, db)
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already registered")
-
     db_user = await UserRepository.create_user(user, db)
     all_user_emails = await UserRepository.get_all_user_emails(db)
     for email in all_user_emails:
@@ -82,14 +81,11 @@ async def delete_author(author_id: int, db: AsyncSession = Depends(get_db)):
 async def create_book(book_data: Book, db: AsyncSession = Depends(get_db)):
     book_repository = BookRepository()
     created_book = await book_repository.create_book(book_data, db)
-
     if not created_book:
         raise HTTPException(status_code=400, detail="Не удалось создать книгу")
-
     all_user_emails = await UserRepository.get_all_user_emails(db)
     for email in all_user_emails:
         send_email.delay(email, "New Book Added", f"The book '{book_data.title}' has been added to the library.")
-
     return created_book
 
 
