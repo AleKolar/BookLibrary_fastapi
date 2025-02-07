@@ -5,6 +5,7 @@ from celery import shared_task
 from dotenv import load_dotenv
 import logging
 
+
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,7 +40,5 @@ def send_email(to_email: str, subject: str, body: str):
         logger.error(f"Failed to send email: {e}")
 
 
-
-
-if __name__ == "__main__":
-    send_email('alek.kolark@gmail.com','Test Subject', 'This is a test email from Python!')
+# if __name__ == "__main__":
+#     send_email('alek.kolark@gmail.com','Test Subject', 'This is a test email from Python!')

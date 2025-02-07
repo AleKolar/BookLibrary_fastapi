@@ -8,7 +8,6 @@ from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.database import create_tables, delete_tables, get_db
-from src.models.orm_models import UserOrm
 from src.models.pydentic_models import SchemaAuthor, Author, SchemaBook, Book, Borrow, SchemaBarrow, SchemaUser, User
 from src.repository.repository import AuthorRepository, BookRepository, BorrowRepository, UserRepository
 from src.src_celery.tasks import send_email
