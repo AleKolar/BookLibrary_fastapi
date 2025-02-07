@@ -1,19 +1,21 @@
 from celery import Celery
 
-
 def make_celery():
-    app = Celery(
+    app_task = Celery(
         'src',
-        broker='amqp://guest:guest@localhost:5672',  # URL сообщения брокера
-        backend='rpc://'  # Бэкенд для подсчета результатов
+        broker='amqp://guest:guest@localhost:5672',
+        backend='rpc://',
     )
 
-    app.conf.update(
+    app_task.conf.update(
         task_routes={
-            'app.tasks.send_email': 'default',
+            'src.src_celery.tasks.send_email': 'default',
         },
     )
 
-    return app
+    with app_task.connection() as connection:
+        app_task.loader.import_module('src.src_celery.tasks')
+
+    return app_task
 
 celery_app = make_celery()

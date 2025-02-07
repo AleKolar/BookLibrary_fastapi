@@ -17,6 +17,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 '''Блок функциональных методов класса User для регистрации и авторизации'''
 
+
 class UserRepository:
     @staticmethod
     async def create_user(user: User, db: AsyncSession):
@@ -38,7 +39,7 @@ class UserRepository:
 
     @staticmethod
     async def get_all_user_emails(db: AsyncSession):
-        query = select(UserOrm.email)  # Исправлено на UserOrm
+        query = select(UserOrm.email)
         result = await db.execute(query)
         emails = result.scalars().all()
         return emails if emails else []
