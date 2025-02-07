@@ -37,3 +37,9 @@ def send_email(to_email: str, subject: str, body: str):
         logger.error("Authentication failed, please check your email credentials.")
     except Exception as e:
         logger.error(f"Failed to send email: {e}")
+
+
+
+
+if __name__ == "__main__":
+    send_email('alek.kolark@gmail.com','Test Subject', 'This is a test email from Python!')

@@ -52,7 +52,7 @@ class UserRepository:
         emails = result.scalars().all()
         if emails:
             return emails
-        return None
+        return []
 
 '''Блок функциональных методов CRUD'''
 

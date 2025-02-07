@@ -8,6 +8,7 @@ from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.database import create_tables, delete_tables, get_db
+from src.models.orm_models import UserOrm
 from src.models.pydentic_models import SchemaAuthor, Author, SchemaBook, Book, Borrow, SchemaBarrow, SchemaUser, User
 from src.repository.repository import AuthorRepository, BookRepository, BorrowRepository, UserRepository
 from src.src_celery.tasks import send_email
@@ -30,9 +31,7 @@ async def register(user: User, db: AsyncSession = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     db_user = await UserRepository.create_user(user, db)
-    all_user_emails = await UserRepository.get_all_user_emails(db)
-    for email in all_user_emails:
-        send_email.delay(email, "Welcome!", "Thank you for registering!")
+    send_email.delay(db_user.email, f"Welcome, {db_user.username}!", "Thank you for registering!")
     return db_user
 
 @app.post("/login/")
