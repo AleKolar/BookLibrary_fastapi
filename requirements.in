@@ -1,0 +1,14 @@
+pydantic==2.9.2 # Важно!!! (для себя) Подходящая версия
+safety==3.2.14   # Важно!!! (для себя) Версия, с которой работает pydantic<2.10.0
+safety-schemas==0.0.10
+uvicorn==0.34.0
+fastapi==0.115.8
+sqlalchemy==2.0.37
+pydantic-settings==2.7.0
+asyncpg==0.30.0
+ruamel-yaml==0.18.10
+ruamel-yaml-clib==0.2.12
+pydantic[email]
+jwt
+passlib
+celery

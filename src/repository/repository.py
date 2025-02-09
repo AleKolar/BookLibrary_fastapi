@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from src.config import settings
+from src.config.config import settings
 from src.models.orm_models import AuthorOrm, BookOrm, BorrowOrm, UserOrm
 from src.models.pydentic_models import Author, Book, SchemaBook, SchemaAuthor, User
 

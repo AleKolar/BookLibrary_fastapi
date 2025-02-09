@@ -4,6 +4,9 @@ FROM python:3.12
 # Установка рабочей директории
 WORKDIR /app
 
+# Пробуем ENV для корректной работы с модулями
+ENV PYTHONPATH=/app/src
+
 # Копируем файл зависимостей
 COPY ./requirements.txt .
 
