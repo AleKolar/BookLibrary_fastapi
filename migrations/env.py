@@ -1,19 +1,27 @@
-import asyncio
-import sys
 import pathlib
+import sys
+import asyncio
+from logging.config import fileConfig
 from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from src.DB.database import Model
-from src.config.config import settings
+from src.DB.orm_models import Model # Импортируйте ваши модели
+from src.config.config import settings  # Импортируйте ваши настройки
 
-# Определите целевую метадату для миграций
+# Alembic Config object
+config = context.config
+
+# Logging setup
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+# Define the target metadata for migrations
 target_metadata = Model.metadata
 
-# Добавьте родительский каталог текущего файла в sys.path
+# Add the parent directory of the current file to sys.path
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
-# Функция для выполнения миграций
+# Function to run migrations
 def do_run_migrations(connection):
     context.configure(
         compare_type=True,
@@ -21,23 +29,21 @@ def do_run_migrations(connection):
         connection=connection,
         target_metadata=target_metadata,
         include_schemas=True,
-        version_table_schema=target_metadata.schema,
     )
 
     with context.begin_transaction():
         context.run_migrations()
 
-# Асинхронная функция для выполнения миграций онлайн
+# Asynchronous function to run migrations online
 async def run_migrations_online():
-    """Выполнить миграции в 'онлайн' режиме."""
-    # Создайте асинхронный движок базы данных с использованием URI из настроек
-    connectable = create_async_engine(settings.ASYNC_DATABASE_URI, future=True)
+    """Run migrations in 'online' mode."""
+    connectable = create_async_engine(settings.get_db_url(), future=True)
 
-    # Подключитесь к базе данных и выполните миграции в транзакции
+    # Connect to the database and run migrations in a transaction
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
 
-# Запустите миграции онлайн с использованием asyncio
+# Run migrations online using asyncio
 if __name__ == "__main__":
     asyncio.run(run_migrations_online())
 
